@@ -117,6 +117,7 @@ passport.deserializeUser((id: number, done: (err: any, user?: User | false | nul
 authRouter.post('', passport.authenticate('json'), (req: Request, res: Response) => {
   const authReq = req as AuthRequest;
   broadcast([ 0 ], { type: 'login', data: 'New user successfully logged in' });
+  broadcast([ 0 ], { type: 'active_users_changed', data: 'User logged in' });
   res.json({
     message: 'Logged in successfully',
     username: authReq.user?.username,
@@ -129,6 +130,7 @@ authRouter.delete('', (req: Request, res: Response, next: NextFunction) => {
   const authReq = req as AuthRequest;  
   authReq.logout((err) => {
     if (err) return next(err);
+    broadcast([ 0 ], { type: 'active_users_changed', data: 'User logged out' });
     res.json({ message: 'Logged out' });
   });
 });
