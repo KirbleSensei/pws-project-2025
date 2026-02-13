@@ -1,0 +1,50 @@
+<form [formGroup]="form">
+  <mat-card>
+    <mat-card-content class="form-container">
+      <div class="flex-row">
+        <mat-form-field appearance="outline" class="flex-field">
+          <mat-label>Name</mat-label>
+          <input matInput formControlName="name" placeholder="Task name"/>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="flex-field">
+          <mat-label>Team</mat-label>
+          <mat-select formControlName="team_id">
+            @for (team of teams; track team.id) {
+              <mat-option [value]="team.id">{{ team.name }} - {{ team.longname }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="flex-field">
+          <mat-label>Responsible person</mat-label>
+          <mat-select formControlName="person_id">
+            @for (person of teamPersons; track person.id) {
+              <mat-option [value]="person.id">{{ person.firstname }} {{ person.lastname }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div class="flex-row">
+        <mat-form-field appearance="outline" class="flex-field">
+          <mat-label>Start date</mat-label>
+          <input matInput [matDatepicker]="startPicker" formControlName="start_date">
+          <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+          <mat-datepicker #startPicker></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="flex-field">
+          <mat-label>End date</mat-label>
+          <input matInput [matDatepicker]="endPicker" formControlName="end_date">
+          <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+          <mat-datepicker #endPicker></mat-datepicker>
+        </mat-form-field>
+      </div>
+
+      @if (form.errors) {
+        <mat-error>Invalid date range (end date must be after start date and not in the future).</mat-error>
+      }
+    </mat-card-content>
+  </mat-card>
+</form>
