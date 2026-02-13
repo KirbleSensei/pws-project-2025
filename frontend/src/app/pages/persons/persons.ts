@@ -6,6 +6,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { MatBadgeModule } from '@angular/material/badge';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 import pdfMake from 'pdfmake/build/pdfmake';
 import pdfFonts from 'pdfmake/build/vfs_fonts';
@@ -17,6 +18,7 @@ import { PersonsService } from '../../services/persons';
 import { debounceTime } from 'rxjs';
 import { User } from '../../models/user';
 import { AuthService } from '../../services/auth';
+import { AdminService } from '../../services/admin';
 
 @Component({
     selector: 'persons-page',
@@ -36,7 +38,7 @@ export class PersonsPage {
     filtered: number = 0;
     order: number = 1;
     
-    constructor(private authService: AuthService, private personsService: PersonsService, private dialog: MatDialog) {
+    constructor(private authService: AuthService, private personsService: PersonsService, private dialog: MatDialog, private adminService: AdminService, private snackBar: MatSnackBar) {
         this.authService.currentUser$.subscribe(user => { this.user = user });
         this.filterControl.valueChanges.
             pipe(debounceTime(200)).
@@ -46,14 +48,25 @@ export class PersonsPage {
     }
 
     openDialog() {
-        const dialogRef = this.dialog.open(EditPersonDialog, { // new person dialog
-            width: '75%',
-            minWidth: '800px',
-            data: { row: null }
-        });
-        dialogRef.afterClosed().subscribe(result => {
-            if(!result) return;
-            this.filterControl.patchValue(result + ' '); // display only record just added
+        this.adminService.acquireLock('edit-person').subscribe({
+            next: () => {
+                const dialogRef = this.dialog.open(EditPersonDialog, { // new person dialog
+                    width: '75%',
+                    minWidth: '800px',
+                    data: { row: null }
+                });
+                dialogRef.afterClosed().subscribe(result => {
+                    this.adminService.releaseLock('edit-person').subscribe();
+                    if(!result) return;
+                    this.filterControl.patchValue(result + ' '); // display only record just added
+                });
+            },
+            error: err => {
+                this.snackBar.open(err?.error?.message ?? 'Another admin is editing a person now', 'Close', {
+                    duration: 5000,
+                    panelClass: ['snackbar-warning']
+                });
+            }
         });
     }
 

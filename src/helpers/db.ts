@@ -18,11 +18,41 @@ export async function openDb(): Promise<void> {
   });
   const { user_version } = await db.connection.get('PRAGMA user_version;') // get current db version
   if(!user_version) { // fresh database
-    await db.connection!.exec('PRAGMA user_version = 1;');
+    await db.connection!.exec('PRAGMA user_version = 3;');
     console.log('Reinitialize content...');
     await createSchemaAndData();
+  } else if (user_version < 2) {
+    await migrateToV2();
+  } else if (user_version < 3) {
+    await migrateToV3();
   }
   await db.connection.exec('PRAGMA foreign_keys = ON'); // to enforce FOREIGN KEY constraints checking
+}
+
+async function migrateToV2(): Promise<void> {
+  await db.connection!.exec('BEGIN IMMEDIATE');
+  try {
+    await db.connection!.run(createTableStatement(taskTableDef));
+    await db.connection!.exec('PRAGMA user_version = 2;');
+    await db.connection!.exec('COMMIT');
+    console.log('Migrated database to version 2');
+  } catch (error) {
+    await db.connection!.exec('ROLLBACK');
+    throw error;
+  }
+}
+
+async function migrateToV3(): Promise<void> {
+  await db.connection!.exec('BEGIN IMMEDIATE');
+  try {
+    await db.connection!.run(createTableStatement(changeLogTableDef));
+    await db.connection!.exec('PRAGMA user_version = 3;');
+    await db.connection!.exec('COMMIT');
+    console.log('Migrated database to version 3');
+  } catch (error) {
+    await db.connection!.exec('ROLLBACK');
+    throw error;
+  }
 }
 
 export const personTableDef = {
@@ -61,6 +91,47 @@ export const membershipTableDef = {
     { column: 'team_id', references: 'teams(id)' }
   ]
 };
+
+export const taskTableDef = {
+  name: 'tasks',
+  columns: {
+    id: { type: 'INTEGER', primaryKey: true, autoincrement: true },
+    name: { type: 'TEXT', notNull: true },
+    team_id: { type: 'INTEGER', notNull: true },
+    person_id: { type: 'INTEGER', notNull: true },
+    start_date: { type: 'DATE', notNull: true },
+    end_date: { type: 'DATE' }
+  },
+  foreignKeys: [
+    { column: 'team_id', references: 'teams(id)' },
+    { column: 'person_id', references: 'persons(id)' }
+  ]
+};
+
+export const changeLogTableDef = {
+  name: 'change_log',
+  columns: {
+    id: { type: 'INTEGER', primaryKey: true, autoincrement: true },
+    table_name: { type: 'TEXT', notNull: true },
+    operation: { type: 'TEXT', notNull: true },
+    row_id: { type: 'INTEGER' },
+    username: { type: 'TEXT', notNull: true },
+    payload: { type: 'TEXT' },
+    created_at: { type: 'DATE', notNull: true }
+  }
+};
+
+export async function logDbChange(tableName: string, operation: string, rowId: number | null, username: string, payload: any = null) {
+  await db.connection!.run(
+    'INSERT INTO change_log (table_name, operation, row_id, username, payload, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+    tableName,
+    operation,
+    rowId,
+    username,
+    payload === null ? null : JSON.stringify(payload),
+    new Date()
+  );
+}
 
 function createTableStatement(def: { 
     name: string;
@@ -142,4 +213,12 @@ export async function createSchemaAndData(): Promise<void> {
     await db.connection!.run('INSERT INTO memberships (person_id, team_id) VALUES (?, ?)', ...membership);
   }
   console.log('Memberships table created with sample data');
+
+  const createTasksStatement = createTableStatement(taskTableDef);
+  await db.connection!.run(createTasksStatement);
+  console.log('Tasks table created');
+
+  const createChangeLogStatement = createTableStatement(changeLogTableDef);
+  await db.connection!.run(createChangeLogStatement);
+  console.log('Change log table created');
 }
