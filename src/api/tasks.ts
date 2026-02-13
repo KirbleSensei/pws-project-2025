@@ -1,11 +1,15 @@
 import { Request, Response, Router } from "express";
 
 import { requireRole } from "../helpers/auth";
-import { db, taskTableDef } from "../helpers/db";
+import { db, logDbChange, taskTableDef } from "../helpers/db";
 import { HttpError } from "../helpers/errors";
 import { Task } from "../model/task";
 
 export const tasksRouter = Router();
+
+function actorName(req: Request): string {
+  return ((req.user as any)?.username ?? 'system');
+}
 
 async function ensureResponsiblePersonInTeam(personId: number, teamId: number) {
   const membership = await db.connection!.get(
@@ -94,6 +98,7 @@ tasksRouter.post('/', requireRole([0]), async (req: Request, res: Response) => {
       newTask.start_date,
       newTask.end_date
     );
+    await logDbChange('tasks', 'INSERT', addedTask.id, actorName(req), addedTask);
     res.json(addedTask);
   } catch (error: Error | any) {
     throw new HttpError(400, 'Cannot add task: ' + error.message);
@@ -121,6 +126,7 @@ tasksRouter.put('/', requireRole([0]), async (req: Request, res: Response) => {
     if (!updatedTask) {
       throw new HttpError(404, 'Task to update not found');
     }
+    await logDbChange('tasks', 'UPDATE', updatedTask.id, actorName(req), updatedTask);
     res.json(updatedTask);
   } catch (error: Error | any) {
     throw new HttpError(400, 'Cannot update task: ' + error.message);
@@ -136,5 +142,6 @@ tasksRouter.delete('/', requireRole([0]), async (req: Request, res: Response) =>
   if (!deletedTask) {
     throw new HttpError(404, 'Task to delete not found');
   }
+  await logDbChange('tasks', 'DELETE', deletedTask.id, actorName(req), deletedTask);
   res.json(deletedTask);
 });

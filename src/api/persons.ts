@@ -1,9 +1,10 @@
 import { Router, Request, Response } from "express";
 
 import { HttpError } from "../helpers/errors";
-import { db, personTableDef } from "../helpers/db";
+import { db, logDbChange, personTableDef } from "../helpers/db";
 import { Person } from "../model/person";
 import { requireRole } from "../helpers/auth";
+import { broadcast } from "../helpers/websocket";
 
 export const personsRouter = Router();
 
@@ -93,6 +94,11 @@ async function setMembership(person_id: number, team_ids: number[]) {
   for (const team_id of team_ids) {
     await db.connection!.run('INSERT INTO memberships (person_id, team_id) VALUES (?, ?)', person_id, team_id);
   }
+  broadcast([0, 1], { type: 'membership_changed', data: { person_id, team_ids } });
+}
+
+function actorName(req: Request): string {
+  return ((req.user as any)?.username ?? 'system');
 }
 
 personsRouter.post('/', requireRole([0]), async (req: Request, res: Response) => {
@@ -105,6 +111,7 @@ personsRouter.post('/', requireRole([0]), async (req: Request, res: Response) =>
       newPerson.firstname, newPerson.lastname, newPerson.birthdate, newPerson.email
     );
     await setMembership(addedPerson.id, newPerson.team_ids);
+    await logDbChange('persons', 'INSERT', addedPerson.id, actorName(req), { person: addedPerson, team_ids: newPerson.team_ids });
     await db.connection!.exec('COMMIT');
     res.json(addedPerson);
   } catch (error: Error | any) {
@@ -132,6 +139,7 @@ personsRouter.put('/', requireRole([0]), async (req: Request, res: Response) => 
       throw new HttpError(404, 'Person to update not found');
     }
     await setMembership(updatedPerson.id, personToUpdate.team_ids);
+    await logDbChange('persons', 'UPDATE', updatedPerson.id, actorName(req), { person: updatedPerson, team_ids: personToUpdate.team_ids });
     await db.connection!.exec('COMMIT');
     res.json(updatedPerson);
   } catch (error: Error | any) {
@@ -152,6 +160,8 @@ personsRouter.delete('/', requireRole([0]), async (req: Request, res: Response) 
       await db.connection!.exec('ROLLBACK');
       throw new HttpError(404, 'Person to delete not found');
     }
+    broadcast([0, 1], { type: 'membership_changed', data: { person_id: deletedPerson.id, team_ids: [] } });
+    await logDbChange('persons', 'DELETE', deletedPerson.id, actorName(req), deletedPerson);
     await db.connection!.exec('COMMIT');
     res.json(deletedPerson);
   } catch (error: Error | any) {

@@ -5,6 +5,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { debounceTime, Subscription } from 'rxjs';
 
 import { AuthService } from '../../services/auth';
@@ -15,6 +16,7 @@ import { User } from '../../models/user';
 import { TasksTableComponent } from '../../components/tasks-table/tasks-table';
 import { EditTaskDialog } from '../../dialogs/edit-task/edit-task';
 import { Task } from '../../models/task';
+import { AdminService } from '../../services/admin';
 
 interface GanttTask {
   id: number;
@@ -47,7 +49,7 @@ export class TasksPage {
 
   private sub?: Subscription;
 
-  constructor(private authService: AuthService, private tasksService: TasksService, private teamsService: TeamsService, private dialog: MatDialog) {
+  constructor(private authService: AuthService, private tasksService: TasksService, private teamsService: TeamsService, private dialog: MatDialog, private adminService: AdminService, private snackBar: MatSnackBar) {
     this.authService.currentUser$.subscribe(user => this.user = user);
     this.filterControl.valueChanges.pipe(debounceTime(200)).subscribe(() => this.tasksService.notifyReload());
     this.teamFilterControl.valueChanges.subscribe(() => this.tasksService.notifyReload());
@@ -65,7 +67,18 @@ export class TasksPage {
   }
 
   openDialog() {
-    this.dialog.open(EditTaskDialog, { width: '75%', minWidth: '800px', data: { row: null } });
+    this.adminService.acquireLock('edit-task').subscribe({
+      next: () => {
+        const dialogRef = this.dialog.open(EditTaskDialog, { width: '75%', minWidth: '800px', data: { row: null } });
+        dialogRef.afterClosed().subscribe(() => this.adminService.releaseLock('edit-task').subscribe());
+      },
+      error: err => {
+        this.snackBar.open(err?.error?.message ?? 'Another admin is editing a task now', 'Close', {
+          duration: 5000,
+          panelClass: ['snackbar-warning']
+        });
+      }
+    });
   }
 
   isInRole(roles: number[]) {

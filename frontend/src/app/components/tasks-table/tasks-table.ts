@@ -11,6 +11,7 @@ import { TasksService } from '../../services/tasks';
 import { EditTaskDialog } from '../../dialogs/edit-task/edit-task';
 import { AuthService } from '../../services/auth';
 import { User } from '../../models/user';
+import { AdminService } from '../../services/admin';
 
 @Component({
   selector: 'tasks-table',
@@ -30,7 +31,7 @@ export class TasksTableComponent {
   user: User | null = null;
   private sub?: Subscription;
 
-  constructor(private tasksService: TasksService, private authService: AuthService, private dialog: MatDialog, private snackBar: MatSnackBar) {
+  constructor(private tasksService: TasksService, private authService: AuthService, private dialog: MatDialog, private snackBar: MatSnackBar, private adminService: AdminService) {
     this.authService.currentUser$.subscribe(user => this.user = user);
   }
 
@@ -58,10 +59,21 @@ export class TasksTableComponent {
 
   openDialog(row: Task | null) {
     if (!this.authService.isInRole(this.user, [0])) return;
-    this.dialog.open(EditTaskDialog, {
-      width: '75%',
-      minWidth: '800px',
-      data: { row }
+    this.adminService.acquireLock('edit-task').subscribe({
+      next: () => {
+        const dialogRef = this.dialog.open(EditTaskDialog, {
+          width: '75%',
+          minWidth: '800px',
+          data: { row }
+        });
+        dialogRef.afterClosed().subscribe(() => this.adminService.releaseLock('edit-task').subscribe());
+      },
+      error: err => {
+        this.snackBar.open(err?.error?.message ?? 'Another admin is editing a task now', 'Close', {
+          duration: 5000,
+          panelClass: ['snackbar-warning']
+        });
+      }
     });
   }
 
