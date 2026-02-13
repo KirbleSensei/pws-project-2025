@@ -21,8 +21,26 @@ import { AdminService } from '../../services/admin';
   standalone: true
 })
 export class TasksTableComponent {
-  @Input() filter: string = '';
-  @Input() teamIds: number[] = [];
+  private _filter: string = '';
+  private _teamIds: number[] = [];
+
+  @Input()
+  set filter(value: string) {
+    const next = value ?? '';
+    if (next !== this._filter) {
+      this._filter = next;
+      this.loadData();
+    }
+  }
+
+  @Input()
+  set teamIds(value: number[]) {
+    const next = Array.isArray(value) ? [...value].sort((a, b) => a - b) : [];
+    if (!this.sameIds(next, this._teamIds)) {
+      this._teamIds = next;
+      this.loadData();
+    }
+  }
 
   displayedColumns: string[] = ['id', 'name', 'team', 'person', 'start_date', 'end_date'];
   tasks: Task[] = [];
@@ -37,15 +55,21 @@ export class TasksTableComponent {
 
   ngOnInit() {
     this.sub = this.tasksService.reload$.subscribe(() => this.loadData());
+    this.loadData();
   }
 
   ngOnDestroy() {
     this.sub?.unsubscribe();
   }
 
+  private sameIds(a: number[], b: number[]): boolean {
+    if (a.length !== b.length) return false;
+    return a.every((v, i) => v === b[i]);
+  }
+
   loadData() {
     this.loading = true;
-    this.tasksService.getTasks(this.filter, this.order, this.teamIds).subscribe({
+    this.tasksService.getTasks(this._filter, this.order, this._teamIds).subscribe({
       next: tasks => {
         this.tasks = tasks;
         this.loading = false;
