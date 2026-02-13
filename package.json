@@ -1,0 +1,51 @@
+{
+  "name": "pws2025",
+  "version": "1.0.0",
+  "description": "Programming Web Services 2025",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "ts-node-dev --respawn --watch .env src/index.ts",
+    "build": "npm --prefix frontend run build && tsc",
+    "start": "node dist/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://git@gitlab.com/mariusz.jarocki/pws2025.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://gitlab.com/mariusz.jarocki/pws2025/issues"
+  },
+  "homepage": "https://gitlab.com/mariusz.jarocki/pws2025#readme",
+  "dependencies": {
+    "@faker-js/faker": "^10.1.0",
+    "@types/connect-sqlite3": "^0.9.6",
+    "@types/cookie": "^0.6.0",
+    "@types/cookie-signature": "^1.1.2",
+    "@types/express": "^5.0.3",
+    "@types/express-session": "^1.18.2",
+    "@types/passport": "^1.0.17",
+    "connect-sqlite3": "^0.9.16",
+    "cookie": "^1.1.1",
+    "cookie-signature": "^1.2.2",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "express-session": "^1.18.2",
+    "formidable": "^3.5.4",
+    "morgan": "^1.10.1",
+    "passport": "^0.7.0",
+    "passport-json": "^1.2.0",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7",
+    "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "@types/morgan": "^1.9.10",
+    "@types/ws": "^8.18.1",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.9.3"
+  }
+}

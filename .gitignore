@@ -1,0 +1,9 @@
+/build
+/dist
+/frontend/dist
+node_modules
+.vscode
+.DS_Store
+/data.sqlite3
+/.env
+*.code-workspace
