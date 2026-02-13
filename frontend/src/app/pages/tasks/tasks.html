@@ -1,0 +1,28 @@
+@if(isInRole([0,1])) {
+  <div>
+    <div class="controls-container">
+      @if(isInRole([0])) {
+        <button mat-raised-button color="primary" (click)="openDialog()">Add Task</button>
+      }
+
+      <div class="spacer"></div>
+
+      <mat-form-field appearance="outline" class="filter-field">
+        <mat-label>Teams</mat-label>
+        <mat-select [formControl]="teamFilterControl" multiple>
+          @for (team of teams; track team.id) {
+            <mat-option [value]="team.id">{{ team.name }} - {{ team.longname }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="filter-field">
+        <mat-label>Filter</mat-label>
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput [formControl]="filterControl" placeholder="Filter"/>
+      </mat-form-field>
+    </div>
+
+    <tasks-table [filter]="filterControl.value || ''" [teamIds]="teamFilterControl.value || []"></tasks-table>
+  </div>
+}
