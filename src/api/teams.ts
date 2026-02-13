@@ -1,12 +1,16 @@
 import { Router, Request, Response } from "express";
 
 import { HttpError } from "../helpers/errors";
-import { db, teamTableDef } from "../helpers/db";
+import { db, logDbChange, teamTableDef } from "../helpers/db";
 import { Team } from "../model/team";
 import { deleteUploadedFile } from "../helpers/fileupload";
 import { requireRole } from "../helpers/auth";
 
 export const teamsRouter = Router();
+
+function actorName(req: Request): string {
+  return ((req.user as any)?.username ?? 'system');
+}
 
 // teams endpoints
 teamsRouter.get('/', requireRole([0, 1]), async (req: Request, res: Response) => {
@@ -67,6 +71,7 @@ teamsRouter.post('/', requireRole([0]), async (req: Request<{}, {}, Team>, res: 
     const addedTeam = await db!.connection!.get('INSERT INTO teams (name, longname, color, has_avatar, latitude, longitude) VALUES (?, ?, ?, ?, ?, ?) RETURNING *',
       newTeam.name, newTeam.longname, newTeam.color, newTeam.has_avatar, newTeam.location?.latitude ?? null, newTeam.location?.longitude ?? null
     );
+    await logDbChange('teams', 'INSERT', addedTeam.id, actorName(req), addedTeam);
     res.json(addedTeam); // return the newly created Team; alternatively, you may consider returning the full list of teams
   } catch (error: Error | any) {
     throw new HttpError(400, 'Cannot add team: ' + error.message); // bad request; validation or database error
@@ -85,6 +90,7 @@ teamsRouter.put('/', requireRole([0]), async (req: Request<{}, {}, Team>, res: R
       TeamToUpdate.name, TeamToUpdate.longname, TeamToUpdate.color, TeamToUpdate.has_avatar, TeamToUpdate.location?.latitude ?? null, TeamToUpdate.location?.longitude ?? null, TeamToUpdate.id
     );
     if (updatedTeam) {
+      await logDbChange('teams', 'UPDATE', updatedTeam.id, actorName(req), updatedTeam);
       if(!has_avatar) {
         deleteUploadedFile(id.toString() + '.png', 'avatar'); // delete associated avatar file if exists
       }
@@ -104,6 +110,7 @@ teamsRouter.delete('/', requireRole([0]), async (req: Request, res: Response) =>
   }
   const deletedTeam = await db!.connection!.get('DELETE FROM teams WHERE id = ? RETURNING *', id);
   if (deletedTeam) {
+    await logDbChange('teams', 'DELETE', deletedTeam.id, actorName(req), deletedTeam);
     deleteUploadedFile(id.toString() + '.png', 'avatar'); // delete associated avatar file if exists
     res.json(deletedTeam); // return the deleted Team
   } else {

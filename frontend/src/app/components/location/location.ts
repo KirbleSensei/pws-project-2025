@@ -2,9 +2,9 @@ import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild, NgZone, Inp
 import * as L from 'leaflet';
 import { GeoPoint } from '../../models/geopoint';
 
-import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
-import markerIcon from 'leaflet/dist/images/marker-icon.png';
-import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+const LEAFLET_MARKER_ICON_2X = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png';
+const LEAFLET_MARKER_ICON = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png';
+const LEAFLET_MARKER_SHADOW = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png';
 
 @Component({
   selector: 'location',
@@ -29,9 +29,9 @@ export class LocationComponent implements AfterViewInit, OnDestroy {
   private initMap() {
     delete (L.Icon.Default.prototype as any)._getIconUrl;
     L.Icon.Default.mergeOptions({
-      iconRetinaUrl: markerIcon2x,
-      iconUrl: markerIcon,
-      shadowUrl: markerShadow,
+      iconRetinaUrl: LEAFLET_MARKER_ICON_2X,
+      iconUrl: LEAFLET_MARKER_ICON,
+      shadowUrl: LEAFLET_MARKER_SHADOW,
     });
 
     this.map = L.map(this.mapContainer.nativeElement).setView(
