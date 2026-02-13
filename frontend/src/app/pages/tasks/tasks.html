@@ -23,6 +23,38 @@
       </mat-form-field>
     </div>
 
+    <section class="gantt-wrapper">
+      <h3>Tasks timeline (Gantt)</h3>
+      <p class="gantt-hint">Timeline from the oldest task start date to today. Ongoing tasks extend to the right edge.</p>
+      @if(ganttTasks.length === 0) {
+        <div class="empty-gantt">No tasks to display. Add at least one task to see the Gantt bars.</div>
+      } @else {
+        <div class="timeline-range">
+          <span>{{ ganttFromLabel }}</span>
+          <span>{{ ganttToLabel }}</span>
+        </div>
+        <div class="gantt-list">
+          @for (task of ganttTasks; track task.id) {
+            <div class="gantt-row">
+              <div class="task-label">
+                <strong>{{ task.name }}</strong>
+                <small>{{ task.teamName }} · {{ task.personName }}</small>
+              </div>
+              <div class="task-track">
+                <div class="task-bar"
+                     [style.left.%]="task.leftPct"
+                     [style.width.%]="task.widthPct"
+                     [style.backgroundColor]="task.color"
+                     [title]="task.startLabel + ' → ' + task.endLabel"></div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </section>
+
     <tasks-table [filter]="filterControl.value || ''" [teamIds]="teamFilterControl.value || []"></tasks-table>
   </div>
+} @else {
+  <em>You have to log in to operate</em>
 }

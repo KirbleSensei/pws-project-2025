@@ -5,15 +5,89 @@
   margin-bottom: 16px;
 }
 
-.controls-container .new-team-button {
-    margin-left: 0;
-}
-
 .controls-container .spacer {
   flex: 1;
 }
 
 .controls-container .filter-field {
-  width: 200px;
+  width: 220px;
   margin-right: auto;
+}
+
+.gantt-wrapper {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+  background: #fafafa;
+}
+
+.gantt-wrapper h3 {
+  margin: 0 0 8px 0;
+}
+
+.gantt-hint {
+  margin: 0 0 8px;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.timeline-range {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: #555;
+  margin-bottom: 8px;
+}
+
+.gantt-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gantt-row {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  align-items: center;
+  gap: 12px;
+}
+
+.task-label {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.task-label strong,
+.task-label small {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.task-track {
+  position: relative;
+  height: 22px;
+  border-radius: 4px;
+  background: repeating-linear-gradient(
+    to right,
+    #f0f0f0 0,
+    #f0f0f0 24px,
+    #f7f7f7 24px,
+    #f7f7f7 48px
+  );
+}
+
+.task-bar {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  border-radius: 4px;
+  min-width: 2px;
+}
+
+.empty-gantt {
+  color: #666;
+  font-style: italic;
 }
