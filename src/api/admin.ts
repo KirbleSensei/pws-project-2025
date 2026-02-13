@@ -18,7 +18,7 @@ async function readActiveSessions() {
     driver: sqlite3.Database
   });
   try {
-    const rows = await sessionDb.all('SELECT sid, sess, expire FROM sessions ORDER BY expire DESC');
+    const rows = await sessionDb.all('SELECT sid, sess, expired FROM sessions ORDER BY expired DESC');
     const now = Date.now();
     return rows
       .map((r: any) => {
@@ -33,8 +33,8 @@ async function readActiveSessions() {
             username: user.username,
             roles: user.roles,
             userId,
-            expire: r.expire,
-            expired: r.expire * 1000 < now
+            expires_at: r.expired,
+            expired: r.expired < now
           };
         } catch {
           return null;

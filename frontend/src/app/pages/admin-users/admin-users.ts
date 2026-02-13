@@ -13,7 +13,7 @@ import { WebsocketService } from '../../services/websocket';
   templateUrl: './admin-users.html'
 })
 export class AdminUsersPage {
-  displayedColumns = ['username', 'roles', 'expire', 'expired', 'action'];
+  displayedColumns = ['username', 'roles', 'expires_at', 'expired', 'action'];
   sessions: ActiveUserSession[] = [];
 
   constructor(private adminService: AdminService, private websocketService: WebsocketService) {

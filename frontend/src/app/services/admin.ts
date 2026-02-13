@@ -17,7 +17,7 @@ export interface ActiveUserSession {
   username: string;
   roles: number[];
   userId: number;
-  expire: number;
+  expires_at: number;
   expired: boolean;
   current: boolean;
 }
