@@ -1,0 +1,25 @@
+<div class="map-page">
+  <div #mapContainer class="teams-map"></div>
+
+  @if(loading) {
+    <p>Loading routes...</p>
+  } @else if(error) {
+    <p class="error">{{ error }}</p>
+  } @else {
+    <h3>Walking distances between team locations (km)</h3>
+    <table class="distance-table">
+      <thead>
+        <tr><th>From</th><th>To</th><th>Distance (km)</th></tr>
+      </thead>
+      <tbody>
+        @for (row of distanceRows; track row.from + '-' + row.to) {
+          <tr>
+            <td>{{ row.from }}</td>
+            <td>{{ row.to }}</td>
+            <td>{{ row.distanceKm }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

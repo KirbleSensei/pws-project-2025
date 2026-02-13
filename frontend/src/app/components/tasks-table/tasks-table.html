@@ -1,0 +1,34 @@
+<table mat-table [dataSource]="tasks" class="mat-compact-table mat-mdc-table" matSort matSortDisableClear (matSortChange)="onSortChange($event)">
+  <ng-container matColumnDef="id">
+    <th mat-header-cell *matHeaderCellDef mat-sort-header="1" class="centered">ID</th>
+    <td mat-cell *matCellDef="let task" class="centered">{{ task.id }}</td>
+  </ng-container>
+
+  <ng-container matColumnDef="name">
+    <th mat-header-cell *matHeaderCellDef mat-sort-header="2">Name</th>
+    <td mat-cell *matCellDef="let task">{{ task.name }}</td>
+  </ng-container>
+
+  <ng-container matColumnDef="team">
+    <th mat-header-cell *matHeaderCellDef mat-sort-header="3">Team</th>
+    <td mat-cell *matCellDef="let task">{{ task.team_name }}</td>
+  </ng-container>
+
+  <ng-container matColumnDef="person">
+    <th mat-header-cell *matHeaderCellDef mat-sort-header="4">Responsible</th>
+    <td mat-cell *matCellDef="let task">{{ task.person_name }}</td>
+  </ng-container>
+
+  <ng-container matColumnDef="start_date">
+    <th mat-header-cell *matHeaderCellDef mat-sort-header="5" class="centered">Start</th>
+    <td mat-cell *matCellDef="let task" class="centered">{{ task.start_date | date }}</td>
+  </ng-container>
+
+  <ng-container matColumnDef="end_date">
+    <th mat-header-cell *matHeaderCellDef mat-sort-header="6" class="centered">End</th>
+    <td mat-cell *matCellDef="let task" class="centered">{{ task.end_date ? (task.end_date | date) : '-' }}</td>
+  </ng-container>
+
+  <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+  <tr mat-row *matRowDef="let row; columns: displayedColumns;" (click)="openDialog(row)" class="clickable-row"></tr>
+</table>
