@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ElementRef, Input, ViewChild, OnDestroy, Output, EventEmitter } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Input, ViewChild, OnDestroy, OnInit, Output, EventEmitter } from '@angular/core';
 import { MatTableModule } from '@angular/material/table';
 import { MatSortModule, Sort } from '@angular/material/sort';
 import { MatChipsModule } from '@angular/material/chips';
@@ -14,6 +14,7 @@ import { ColorsService } from '../../services/colors';
 import { User } from '../../models/user';
 import { AuthService } from '../../services/auth';
 import { AdminService } from '../../services/admin';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'persons-table',
@@ -22,10 +23,11 @@ import { AdminService } from '../../services/admin';
   imports: [CommonModule, MatTableModule, MatSortModule, MatChipsModule, MatProgressSpinnerModule],
   standalone: true
 })
-export class PersonsTableComponent implements AfterViewInit, OnDestroy {
+export class PersonsTableComponent implements OnInit, AfterViewInit, OnDestroy {
   displayedColumns: string[] = ['id', 'firstname', 'lastname', 'birthdate', 'email', 'teams'];
   persons: Person[] = [];
   private observer?: IntersectionObserver;
+  private sub?: Subscription;
 
   private _filter: string = '';
   @Input()
@@ -63,11 +65,17 @@ export class PersonsTableComponent implements AfterViewInit, OnDestroy {
     this.getContrastColor = this.colorsService.getContrastColor;
   }
 
+
+  ngOnInit() {
+    this.sub = this.personsService.reload$.subscribe(() => this.resetAndLoad());
+  }
+
   ngAfterViewInit() {
     this.initObserver();
   }
 
   ngOnDestroy() {
+    this.sub?.unsubscribe();
     this.observer?.disconnect();
   }
 
