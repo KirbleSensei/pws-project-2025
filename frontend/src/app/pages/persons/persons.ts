@@ -58,7 +58,7 @@ export class PersonsPage {
                 dialogRef.afterClosed().subscribe(result => {
                     this.adminService.releaseLock('edit-person').subscribe();
                     if(!result) return;
-                    this.filterControl.patchValue(result + ' '); // display only record just added
+                    this.personsService.notifyReload();
                 });
             },
             error: err => {
