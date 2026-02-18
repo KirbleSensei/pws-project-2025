@@ -18,9 +18,11 @@ export async function openDb(): Promise<void> {
   });
   const { user_version } = await db.connection.get('PRAGMA user_version;') // get current db version
   if(!user_version) { // fresh database
-    await db.connection!.exec('PRAGMA user_version = 1;');
+    await db.connection!.exec('PRAGMA user_version = 2;');
     console.log('Reinitialize system data...');
     await createSchemaAndData();
+  } else if (user_version < 2) {
+    await migrateToV2();
   }
 }
 
@@ -32,7 +34,7 @@ export async function createSchemaAndData(): Promise<void> {
     password TEXT NOT NULL,
     roles TEXT NOT NULL)`;
   try {
-    await db.connection!.exec('PRAGMA user_version = 1;'); // set db version to 1
+    await db.connection!.exec('PRAGMA user_version = 2;'); // set db version to 2
     await db.connection!.run(createUsersTable);
     // we can assume that the table has been just created, insert default users
     await db.connection!.run(
@@ -45,6 +47,27 @@ export async function createSchemaAndData(): Promise<void> {
     );
   } catch(err) {
     throw new Error('Error creating system database: ' + (err as Error).message);
+  }
+}
+
+async function migrateToV2(): Promise<void> {
+  await db.connection!.exec('BEGIN IMMEDIATE');
+  try {
+    // ensure second admin user exists
+    const existing = await db.connection!.get('SELECT 1 FROM users WHERE username = ?', 'admin2');
+    if (!existing) {
+      await db.connection!.run(
+        'INSERT INTO users (username, password, roles) VALUES (?, ?, ?)',
+        'admin2',
+        hashPassword(process.env.ADMIN2PASSWORD || 'Admin2123'),
+        JSON.stringify([0])
+      );
+    }
+    await db.connection!.exec('PRAGMA user_version = 2;');
+    await db.connection!.exec('COMMIT');
+  } catch (err) {
+    await db.connection!.exec('ROLLBACK');
+    throw new Error('Error migrating system database to v2: ' + (err as Error).message);
   }
 }
 
